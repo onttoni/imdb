@@ -89,7 +89,22 @@ module Imdb
         $1 + '.jpg'
       end
     end
+    
+    # Returns a string containing the URL of a reduced version of the poster
+    def small_poster
+      document.at("a[@name='poster'] img")['src'] rescue nil
+    end
+    
+    # Returns an array with the URLs of thumbs related to the movie (smaller versions of 'images')
+    def thumbs
+      document.search(".media_strip_thumbs a img[@width='90']").map { |img| img['src'].strip.imdb_unescape_html } rescue []
+    end
 
+    # Returns an array with the URLs of images related to the movie (bigger versions of 'thumbs')
+    def images
+      document.search(".media_strip_thumbs a img[@width='90']").map { |img| Imdb::Movie.img_remove_parameters(img['src'].strip.imdb_unescape_html) } rescue []
+    end
+    
     # Returns a float containing the average user rating
     def rating
       document.at(".starbar-meta b").innerHTML.strip.imdb_unescape_html.split('/').first.to_f rescue nil
@@ -134,6 +149,16 @@ module Imdb
     # Returns a new Hpricot document for parsing.
     def document
       @document ||= Hpricot(Imdb::Movie.find_by_id(@id))
+    end
+
+    # Clean image parameters in order to get the pure image url
+    def self.img_remove_parameters(url)
+      case url
+      when /^(http:.+@@)/
+        $1 + '.jpg'
+      when /^(http:.+?)\.[^\/]+$/
+        $1 + '.jpg'
+      end
     end
 
     # Use HTTParty to fetch the raw HTML for this movie.
