@@ -54,6 +54,11 @@ module Imdb
       'http://imdb.com' + document.at("a[@href*=/video/screenplay/]")["href"] rescue nil
     end
 
+    # Returns an array of trailer ids (as strings)
+    def trailer_ids
+      document.search("a[@href*=/video/imdb/]").map { |a| a['href'].split('/').last.gsub(/^vi/, '') } rescue []
+    end
+
     # Returns an array of genres (as strings)
     def genres
       document.search("h5[text()='Genre:'] ~ a[@href*=/Sections/Genres/']").map { |link| link.innerHTML.strip.imdb_unescape_html } rescue []
@@ -89,12 +94,12 @@ module Imdb
         $1 + '.jpg'
       end
     end
-    
+
     # Returns a string containing the URL of a reduced version of the poster
     def small_poster
       document.at("a[@name='poster'] img")['src'] rescue nil
     end
-    
+
     # Returns an array with the URLs of thumbs related to the movie (smaller versions of 'images')
     def thumbs
       document.search(".media_strip_thumbs a img[@width='90']").map { |img| img['src'].strip.imdb_unescape_html } rescue []
@@ -104,7 +109,7 @@ module Imdb
     def images
       document.search(".media_strip_thumbs a img[@width='90']").map { |img| Imdb::Movie.img_remove_parameters(img['src'].strip.imdb_unescape_html) } rescue []
     end
-    
+
     # Returns a float containing the average user rating
     def rating
       document.at(".starbar-meta b").innerHTML.strip.imdb_unescape_html.split('/').first.to_f rescue nil
